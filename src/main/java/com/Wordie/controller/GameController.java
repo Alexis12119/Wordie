@@ -67,11 +67,7 @@ public class GameController implements GameListener {
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (int c = 0; c < GameModel.WORD_LENGTH; c++) {
-            sb.append(((JLabel) tilePanel.getComponent(model.getCurrentRow() * GameModel.WORD_LENGTH + c)).getText());
-        }
-        String guess = sb.toString();
+        String guess = tilePanel.getWordAtRow(model.getCurrentRow());
 
         if (!dictionary.isValid(guess)) {
             JOptionPane.showMessageDialog(frame, "Not a valid word", "Wordie", JOptionPane.WARNING_MESSAGE);
