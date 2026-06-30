@@ -10,7 +10,7 @@ public class GameFrame extends JFrame {
     private final KeyboardPanel keyboardPanel;
 
     public GameFrame(TilePanel tilePanel, KeyboardPanel keyboardPanel) {
-        super("Wordle");
+        super("Wordie");
         this.tilePanel = tilePanel;
         this.keyboardPanel = keyboardPanel;
 
@@ -19,7 +19,7 @@ public class GameFrame extends JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 int choice = JOptionPane.showConfirmDialog(
-                    GameFrame.this, "Are you sure you want to exit?", "Wordle",
+                    GameFrame.this, "Are you sure you want to exit?", "Wordie",
                     JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE
                 );
                 if (choice == JOptionPane.YES_OPTION) {
