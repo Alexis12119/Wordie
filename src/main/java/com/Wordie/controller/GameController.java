@@ -82,10 +82,6 @@ public class GameController implements GameListener {
         });
     }
 
-    private void startNewGame() {
-        startNewGame(frame.getCurrentDifficulty());
-    }
-
     private void startNewGame(Difficulty difficulty) {
         stopTimer();
         audioManager.stopAll();
