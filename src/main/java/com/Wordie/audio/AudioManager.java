@@ -9,35 +9,38 @@ import java.io.InputStream;
 public class AudioManager {
 
     private Thread bgThread;
-    private volatile boolean bgPlaying;
-    private Thread fxThread;
+    private volatile Player bgPlayer;
 
-    public void playBackground() {
-        stopAll();
-        bgPlaying = true;
+    private Thread fxThread;
+    private volatile Player fxPlayer;
+
+    public synchronized void playBackground() {
+        stopBackground();
         bgThread = new Thread(() -> {
-            while (bgPlaying) {
+            while (!Thread.interrupted()) {
                 InputStream is = getClass().getResourceAsStream("/audio/backgroundMusic.mp3");
                 if (is == null) break;
                 try {
                     Player player = new Player(new BufferedInputStream(is));
+                    bgPlayer = player;
                     player.play();
+                    bgPlayer = null;
                     is.close();
                 } catch (JavaLayerException | java.io.IOException e) {
                     System.err.println("Background audio error: " + e.getMessage());
+                    break;
                 }
-                if (Thread.interrupted()) break;
             }
         }, "bg-audio");
         bgThread.setDaemon(true);
         bgThread.start();
     }
 
-    public void playWin() {
+    public synchronized void playWin() {
         playOnce("/audio/winnerMusic.mp3");
     }
 
-    public void playLoss() {
+    public synchronized void playLoss() {
         playOnce("/audio/gameOverMusic.mp3");
     }
 
@@ -48,7 +51,9 @@ public class AudioManager {
             if (is == null) return;
             try {
                 Player player = new Player(new BufferedInputStream(is));
+                fxPlayer = player;
                 player.play();
+                fxPlayer = null;
                 is.close();
             } catch (JavaLayerException | java.io.IOException e) {
                 System.err.println("Audio error: " + e.getMessage());
@@ -58,20 +63,27 @@ public class AudioManager {
         fxThread.start();
     }
 
-    public void stopAll() {
+    public synchronized void stopAll() {
         stopBackground();
         stopEffect();
     }
 
-    public void stopBackground() {
-        bgPlaying = false;
+    public synchronized void stopBackground() {
+        if (bgPlayer != null) {
+            bgPlayer.close();
+            bgPlayer = null;
+        }
         if (bgThread != null) {
             bgThread.interrupt();
             bgThread = null;
         }
     }
 
-    private void stopEffect() {
+    private synchronized void stopEffect() {
+        if (fxPlayer != null) {
+            fxPlayer.close();
+            fxPlayer = null;
+        }
         if (fxThread != null) {
             fxThread.interrupt();
             fxThread = null;
