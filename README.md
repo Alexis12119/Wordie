@@ -2,7 +2,7 @@
 
 A Wordle clone built with Java Swing, organized using MVC and common design patterns.
 
-<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/8e7d24ef-dbb1-4ebc-8925-88cb00d1e330" />
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/81ece957-05bc-4d3b-816c-05a254468d4f" />
 
 ## How to run
 
