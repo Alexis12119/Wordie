@@ -6,4 +6,6 @@ public interface GameListener {
     void onRowCompleted(int row);
     void onGameOver(boolean won, String targetWord);
     void onGameReset();
+    void onTimerUpdated(int secondsRemaining);
+    void onDifficultyChanged(Difficulty difficulty);
 }

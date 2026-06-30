@@ -1,5 +1,6 @@
 package com.Wordie.controller;
 
+import com.Wordie.audio.AudioManager;
 import com.Wordie.model.*;
 import com.Wordie.view.*;
 import javax.swing.*;
@@ -13,6 +14,10 @@ public class GameController implements GameListener {
     private final KeyboardPanel keyboardPanel;
     private final WordDictionary dictionary;
     private final WordPicker wordPicker;
+    private final AudioManager audioManager;
+    private final Leaderboard leaderboard;
+    private javax.swing.Timer gameTimer;
+    private int secondsRemaining;
 
     public GameController(GameModel model, GameFrame frame, WordDictionary dictionary, WordPicker wordPicker) {
         this.model = model;
@@ -21,10 +26,18 @@ public class GameController implements GameListener {
         this.keyboardPanel = frame.getKeyboardPanel();
         this.dictionary = dictionary;
         this.wordPicker = wordPicker;
+        this.audioManager = new AudioManager();
+        this.leaderboard = new Leaderboard();
 
         model.addListener(this);
         wireKeyboard();
         wirePhysicalKeyboard();
+        wireMenu();
+
+        secondsRemaining = model.getTimeLimit();
+        frame.updateTimer(secondsRemaining);
+        startTimer();
+        audioManager.playBackground();
     }
 
     private void wireKeyboard() {
@@ -52,11 +65,66 @@ public class GameController implements GameListener {
         frame.setFocusTraversalKeysEnabled(false);
     }
 
+    private void wireMenu() {
+        frame.setOnNewGame(() -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                frame, "Are you sure? Progress will be lost.",
+                "Wordie", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                Difficulty d = frame.showDifficultyPicker();
+                startNewGame(d);
+            }
+        });
+        frame.setOnLeaderboard(() -> {
+            LeaderboardDialog dialog = new LeaderboardDialog(frame, leaderboard);
+            dialog.setVisible(true);
+        });
+    }
+
+    private void startNewGame() {
+        startNewGame(frame.getCurrentDifficulty());
+    }
+
+    private void startNewGame(Difficulty difficulty) {
+        stopTimer();
+        audioManager.stopAll();
+        String newTarget = wordPicker.pickWord();
+        model.reset(newTarget, difficulty);
+        secondsRemaining = difficulty.getMaxSeconds();
+        frame.updateTimer(secondsRemaining);
+        startTimer();
+        audioManager.playBackground();
+    }
+
+    private void startTimer() {
+        if (gameTimer != null) gameTimer.stop();
+        gameTimer = new javax.swing.Timer(1000, e -> {
+            if (model.isGameOver()) return;
+            secondsRemaining--;
+            frame.updateTimer(secondsRemaining);
+            if (secondsRemaining <= 0) {
+                stopTimer();
+                model.timeUp();
+            }
+        });
+        gameTimer.start();
+    }
+
+    private void stopTimer() {
+        if (gameTimer != null) {
+            gameTimer.stop();
+            gameTimer = null;
+        }
+    }
+
     private void handleCharInput(char c) {
+        if (model.isGameOver()) return;
         model.typeLetter(c);
     }
 
     private void handleDelete() {
+        if (model.isGameOver()) return;
         model.deleteLetter();
     }
 
@@ -101,10 +169,30 @@ public class GameController implements GameListener {
 
     @Override
     public void onGameOver(boolean won, String targetWord) {
+        stopTimer();
         String msg = won ? "You got it!\nThe word was " + targetWord
                          : "Game Over!\nThe word was " + targetWord;
         JOptionPane.showMessageDialog(frame, msg, "Wordie", JOptionPane.INFORMATION_MESSAGE);
+        if (won) {
+            audioManager.stopAll();
+            audioManager.playWin();
+            handleWin();
+        } else {
+            audioManager.stopAll();
+            audioManager.playLoss();
+        }
         offerReset();
+    }
+
+    private void handleWin() {
+        int attempts = model.getCurrentRow() + 1;
+        Difficulty difficulty = model.getDifficulty();
+        if (leaderboard.isTopScore(difficulty, attempts)) {
+            String name = JOptionPane.showInputDialog(frame, "New top score! Enter your name:", "Leaderboard", JOptionPane.PLAIN_MESSAGE);
+            if (name != null && !name.isBlank()) {
+                leaderboard.save(name.trim(), difficulty, attempts);
+            }
+        }
     }
 
     @Override
@@ -114,11 +202,20 @@ public class GameController implements GameListener {
         frame.requestFocusInWindow();
     }
 
+    @Override
+    public void onTimerUpdated(int secondsRemaining) {
+    }
+
+    @Override
+    public void onDifficultyChanged(Difficulty difficulty) {
+        frame.updateDifficulty(difficulty);
+    }
+
     private void offerReset() {
         int choice = JOptionPane.showConfirmDialog(frame, "Play again?", "Wordie", JOptionPane.YES_NO_OPTION);
         if (choice == JOptionPane.YES_OPTION) {
-            String newTarget = wordPicker.pickWord();
-            model.reset(newTarget);
+            Difficulty d = frame.showDifficultyPicker();
+            startNewGame(d);
         } else {
             System.exit(0);
         }

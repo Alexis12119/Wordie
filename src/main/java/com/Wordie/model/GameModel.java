@@ -15,10 +15,16 @@ public class GameModel {
     private int currentRow;
     private int currentCol;
     private boolean gameOver;
+    private Difficulty difficulty;
 
     public GameModel(GuessEvaluator evaluator, String targetWord) {
+        this(evaluator, targetWord, Difficulty.MEDIUM);
+    }
+
+    public GameModel(GuessEvaluator evaluator, String targetWord, Difficulty difficulty) {
         this.evaluator = evaluator;
         this.targetWord = targetWord;
+        this.difficulty = difficulty;
         this.guesses = new ArrayList<>();
         this.listeners = new ArrayList<>();
         this.currentRow = 0;
@@ -39,6 +45,13 @@ public class GameModel {
     public int getCurrentCol() { return currentCol; }
     public boolean isGameOver() { return gameOver; }
     public List<String> getGuesses() { return guesses; }
+    public Difficulty getDifficulty() { return difficulty; }
+    public int getTimeLimit() { return difficulty.getMaxSeconds(); }
+
+    public void setDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
+        notifyDifficultyChanged(difficulty);
+    }
 
     public void typeLetter(char letter) {
         if (gameOver || currentRow >= MAX_GUESSES || currentCol >= WORD_LENGTH) return;
@@ -82,13 +95,24 @@ public class GameModel {
         return result;
     }
 
+    public void timeUp() {
+        gameOver = true;
+        notifyGameOver(false, targetWord);
+    }
+
     public void reset(String newTarget) {
+        reset(newTarget, difficulty);
+    }
+
+    public void reset(String newTarget, Difficulty difficulty) {
         targetWord = newTarget;
+        this.difficulty = difficulty;
         guesses.clear();
         currentRow = 0;
         currentCol = 0;
         gameOver = false;
         notifyGameReset();
+        notifyDifficultyChanged(difficulty);
     }
 
     private void notifyTileUpdated(int row, int col, char letter, TileState state) {
@@ -118,6 +142,12 @@ public class GameModel {
     private void notifyGameReset() {
         for (GameListener l : listeners) {
             l.onGameReset();
+        }
+    }
+
+    private void notifyDifficultyChanged(Difficulty difficulty) {
+        for (GameListener l : listeners) {
+            l.onDifficultyChanged(difficulty);
         }
     }
 }

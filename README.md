@@ -8,7 +8,7 @@ A Wordle clone built with Java Swing, organized using MVC and common design patt
 
 ```bash
 mvn compile
-java -cp target/classes com.Wordie.App
+java -cp "target/classes:$HOME/.m2/repository/javazoom/jlayer/1.0.1/jlayer-1.0.1.jar:$HOME/.m2/repository/org/xerial/sqlite-jdbc/3.45.3.0/sqlite-jdbc-3.45.3.0.jar" com.Wordie.App
 ```
 
 ## How to play
@@ -23,17 +23,45 @@ java -cp target/classes com.Wordie.App
 - Press ENTER to submit a guess, DEL/BACKSPACE to delete.
 - Close the window triggers an exit confirmation dialog.
 
+## Difficulty & timer
+
+- **Easy** — 5 minutes to guess, **Medium** — 3 minutes, **Hard** — 1 minute.
+- Pick a difficulty from **Menu > New Game** or after a win/loss.
+- Timer ticks down at the top of the window. Game ends when time runs out or you use all 6 attempts.
+
+## Menu
+
+- **Menu > New Game** — confirms, then lets you pick difficulty before starting a fresh game.
+- **Menu > Leaderboard** — shows top 10 records per difficulty, ranked by fewest guesses.
+
+## Leaderboard
+
+- On a win, if your score (number of guesses) is in the top 10 for that difficulty, you're prompted to enter your name.
+- Records are stored locally in `wordie.db` (SQLite).
+
+## Audio
+
+- Background music loops during gameplay.
+- Winner music plays when you guess the word.
+- Game-over music plays when you run out of attempts or time.
+
+Music credits: [Pixabay](https://pixabay.com)
+
 ## Architecture
 
 ```
 com.Wordie
 ├── App.java                 # entry point, wires dependencies together
+├── audio/
+│   └── AudioManager.java    # MP3 playback via JLayer
 ├── controller/
-│   └── GameController.java  # handles input, coordinates model ↔ view
+│   └── GameController.java  # handles input, timer, audio, leaderboard
 ├── model/
+│   ├── Difficulty.java      # enum: EASY / MEDIUM / HARD with time limits
 │   ├── GameModel.java       # core game state, notifies listeners on changes
 │   ├── GameListener.java    # observer interface for view updates
 │   ├── GuessEvaluator.java  # scores a guess against the target word
+│   ├── Leaderboard.java     # SQLite DAO for top scores
 │   ├── TileState.java       # enum: EMPTY / CORRECT / PRESENT / ABSENT
 │   ├── WordBank.java        # word list (550+ five-letter words)
 │   ├── WordDictionary.java  # validates guesses against word bank (HashSet)
@@ -41,8 +69,9 @@ com.Wordie
 │   └── RandomWordPicker.java # picks a random word from the dictionary
 └── view/
     ├── Colors.java           # shared color constants
-    ├── GameFrame.java        # top-level JFrame, fixed 400×500
+    ├── GameFrame.java        # top-level JFrame with menu bar and timer
     ├── KeyboardPanel.java    # on-screen QWERTY keyboard (custom-painted)
+    ├── LeaderboardDialog.java # tabbed dialog showing top scores
     └── TilePanel.java        # 6×5 guess grid (custom-painted)
 ```
 
@@ -64,4 +93,6 @@ Both `TilePanel` and `KeyboardPanel` use **custom `paintComponent()`** instead o
 
 - Java 17+
 - Maven
-- Swing (custom painting, no external dependencies)
+- Swing (custom painting)
+- JLayer (MP3 playback)
+- SQLite via JDBC (leaderboard persistence)

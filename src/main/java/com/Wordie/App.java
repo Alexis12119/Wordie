@@ -12,7 +12,7 @@ public class App {
             WordDictionary dict = new WordDictionary(WordBank.WORDS);
             WordPicker picker = new RandomWordPicker(dict);
             GuessEvaluator evaluator = new GuessEvaluator();
-            GameModel model = new GameModel(evaluator, picker.pickWord());
+            GameModel model = new GameModel(evaluator, picker.pickWord(), Difficulty.MEDIUM);
 
             TilePanel tilePanel = new TilePanel(GameModel.MAX_GUESSES, GameModel.WORD_LENGTH);
             KeyboardPanel keyboardPanel = new KeyboardPanel();
