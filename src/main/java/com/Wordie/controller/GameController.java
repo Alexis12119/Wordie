@@ -44,9 +44,9 @@ public class GameController implements GameListener {
     }
 
     private void wireKeyboard() {
-        keyboardPanel.setOnEnter(this::handleSubmit);
-        keyboardPanel.setOnDelete(this::handleDelete);
-        keyboardPanel.setInputHandler(this::handleCharInput);
+        keyboardPanel.setOnEnter(this::submitGuess);
+        keyboardPanel.setOnDelete(this::deleteLastLetter);
+        keyboardPanel.setInputHandler(this::typeLetter);
     }
 
     private KeyAdapter createPhysicalKeyboardAdapter() {
@@ -54,13 +54,13 @@ public class GameController implements GameListener {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (model.isGameOver()) return;
-                char c = Character.toUpperCase(e.getKeyChar());
-                if (c >= 'A' && c <= 'Z') {
-                    handleCharInput(c);
+                char keyChar = Character.toUpperCase(e.getKeyChar());
+                if (keyChar >= 'A' && keyChar <= 'Z') {
+                    typeLetter(keyChar);
                 } else if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE || e.getKeyCode() == KeyEvent.VK_DELETE) {
-                    handleDelete();
+                    deleteLastLetter();
                 } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    handleSubmit();
+                    submitGuess();
                 }
             }
         };
@@ -73,8 +73,8 @@ public class GameController implements GameListener {
                 "Wordie", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE
             );
             if (confirm == JOptionPane.YES_OPTION) {
-                Difficulty d = frame.showDifficultyPicker();
-                startNewGame(d);
+                Difficulty difficulty = frame.showDifficultyPicker();
+                startNewGame(difficulty);
             }
         });
         frame.setOnLeaderboard(this::showLeaderboard);
@@ -131,17 +131,17 @@ public class GameController implements GameListener {
         }
     }
 
-    private void handleCharInput(char c) {
+    private void typeLetter(char c) {
         if (model.isGameOver()) return;
         model.typeLetter(c);
     }
 
-    private void handleDelete() {
+    private void deleteLastLetter() {
         if (model.isGameOver()) return;
         model.deleteLetter();
     }
 
-    private void handleSubmit() {
+    private void submitGuess() {
         if (model.isGameOver()) return;
         if (model.getCurrentCol() != GameModel.WORD_LENGTH) {
             JOptionPane.showMessageDialog(frame, "Not enough letters", "Wordie", JOptionPane.WARNING_MESSAGE);
@@ -159,21 +159,21 @@ public class GameController implements GameListener {
     }
 
     @Override
-    public void onTileUpdated(int row, int col, char letter, TileState state) {
+    public void onTileUpdated(int row, int col, char letter, TileState tileState) {
         if (letter == '\0') {
             tilePanel.clearLetter(row, col);
             tilePanel.setTileState(row, col, TileState.EMPTY);
         } else {
             tilePanel.setLetter(row, col, letter);
-            if (state != TileState.EMPTY) {
-                tilePanel.setTileState(row, col, state);
+            if (tileState != TileState.EMPTY) {
+                tilePanel.setTileState(row, col, tileState);
             }
         }
     }
 
     @Override
-    public void onKeyUpdated(char letter, TileState state) {
-        keyboardPanel.setKeyColor(letter, state);
+    public void onKeyUpdated(char letter, TileState tileState) {
+        keyboardPanel.setKeyColor(letter, tileState);
     }
 
     @Override
@@ -183,13 +183,13 @@ public class GameController implements GameListener {
     @Override
     public void onGameOver(boolean won, String targetWord) {
         stopTimer();
-        String msg = won ? "You got it!\nThe word was " + targetWord
-                         : "Game Over!\nThe word was " + targetWord;
-        JOptionPane.showMessageDialog(frame, msg, "Wordie", JOptionPane.INFORMATION_MESSAGE);
+        String gameOverMessage = won ? "You got it!\nThe word was " + targetWord
+                                     : "Game Over!\nThe word was " + targetWord;
+        JOptionPane.showMessageDialog(frame, gameOverMessage, "Wordie", JOptionPane.INFORMATION_MESSAGE);
         if (won) {
             audioManager.stopAll();
             audioManager.playWin();
-            handleWin();
+            recordTopScore();
         } else {
             audioManager.stopAll();
             audioManager.playLoss();
@@ -197,7 +197,7 @@ public class GameController implements GameListener {
         offerReset();
     }
 
-    private void handleWin() {
+    private void recordTopScore() {
         int attempts = model.getCurrentRow() + 1;
         Difficulty difficulty = model.getDifficulty();
         if (leaderboard.isTopScore(difficulty, attempts)) {
@@ -225,10 +225,10 @@ public class GameController implements GameListener {
     }
 
     private void offerReset() {
-        int choice = JOptionPane.showConfirmDialog(frame, "Play again?", "Wordie", JOptionPane.YES_NO_OPTION);
-        if (choice == JOptionPane.YES_OPTION) {
-            Difficulty d = frame.showDifficultyPicker();
-            startNewGame(d);
+        int playAgainChoice = JOptionPane.showConfirmDialog(frame, "Play again?", "Wordie", JOptionPane.YES_NO_OPTION);
+        if (playAgainChoice == JOptionPane.YES_OPTION) {
+            Difficulty difficulty = frame.showDifficultyPicker();
+            startNewGame(difficulty);
         } else {
             cleanup();
             System.exit(0);

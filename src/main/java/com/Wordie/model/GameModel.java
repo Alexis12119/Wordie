@@ -66,21 +66,21 @@ public class GameModel {
         notifyTileUpdated(currentRow, currentCol, '\0', TileState.EMPTY);
     }
 
-    public GuessEvaluator.EvaluationResult submitGuess(String guess) {
+    public GuessEvaluator.GuessOutcome submitGuess(String guess) {
         String guessUp = guess.toUpperCase();
 
-        GuessEvaluator.EvaluationResult result = evaluator.evaluate(guessUp, targetWord);
+        GuessEvaluator.GuessOutcome guessResult = evaluator.scoreGuess(guessUp, targetWord);
         guesses.add(guessUp);
 
-        TileState[] states = result.getStates();
+        TileState[] letterStates = guessResult.getLetterStates();
         for (int i = 0; i < WORD_LENGTH; i++) {
-            notifyTileUpdated(currentRow, i, guessUp.charAt(i), states[i]);
-            notifyKeyUpdated(guessUp.charAt(i), states[i]);
+            notifyTileUpdated(currentRow, i, guessUp.charAt(i), letterStates[i]);
+            notifyKeyUpdated(guessUp.charAt(i), letterStates[i]);
         }
 
         notifyRowCompleted(currentRow);
 
-        if (result.isCorrect()) {
+        if (guessResult.isCorrect()) {
             gameOver = true;
             notifyGameOver(true, targetWord);
         } else {
@@ -92,7 +92,7 @@ public class GameModel {
             }
         }
 
-        return result;
+        return guessResult;
     }
 
     public void timeUp() {
@@ -115,15 +115,15 @@ public class GameModel {
         notifyDifficultyChanged(difficulty);
     }
 
-    private void notifyTileUpdated(int row, int col, char letter, TileState state) {
+    private void notifyTileUpdated(int row, int col, char letter, TileState tileState) {
         for (GameListener l : listeners) {
-            l.onTileUpdated(row, col, letter, state);
+            l.onTileUpdated(row, col, letter, tileState);
         }
     }
 
-    private void notifyKeyUpdated(char letter, TileState state) {
+    private void notifyKeyUpdated(char letter, TileState tileState) {
         for (GameListener l : listeners) {
-            l.onKeyUpdated(letter, state);
+            l.onKeyUpdated(letter, tileState);
         }
     }
 

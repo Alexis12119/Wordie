@@ -7,12 +7,12 @@ import java.util.List;
 public class Leaderboard {
     private static final String DB_URL = "jdbc:sqlite:wordie.db";
 
-    public record Entry(String name, Difficulty difficulty, int attempts, String playedAt) {}
+    public record ScoreRecord(String name, Difficulty difficulty, int attempts, String playedAt) {}
 
     public Leaderboard() {
         try (Connection conn = connect();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute("""
+             Statement createTableStatement = conn.createStatement()) {
+            createTableStatement.execute("""
                 CREATE TABLE IF NOT EXISTS leaderboard (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -27,43 +27,43 @@ public class Leaderboard {
     }
 
     public boolean isTopScore(Difficulty difficulty, int attempts) {
-        List<Entry> top = getTop(difficulty);
-        if (top.size() < 10) return true;
-        return attempts < top.get(top.size() - 1).attempts();
+        List<ScoreRecord> topScores = getTop(difficulty);
+        if (topScores.size() < 10) return true;
+        return attempts < topScores.get(topScores.size() - 1).attempts();
     }
 
     public void save(String name, Difficulty difficulty, int attempts) {
-        String sql = "INSERT INTO leaderboard (name, difficulty, attempts) VALUES (?, ?, ?)";
+        String insertSql = "INSERT INTO leaderboard (name, difficulty, attempts) VALUES (?, ?, ?)";
         try (Connection conn = connect();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, name);
-            ps.setString(2, difficulty.name());
-            ps.setInt(3, attempts);
-            ps.executeUpdate();
+             PreparedStatement preparedStatement = conn.prepareStatement(insertSql)) {
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, difficulty.name());
+            preparedStatement.setInt(3, attempts);
+            preparedStatement.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Leaderboard save error: " + e.getMessage());
         }
     }
 
-    public List<Entry> getTop(Difficulty difficulty) {
-        List<Entry> entries = new ArrayList<>();
-        String sql = "SELECT name, difficulty, attempts, played_at FROM leaderboard WHERE difficulty = ? ORDER BY attempts ASC, played_at ASC LIMIT 10";
+    public List<ScoreRecord> getTop(Difficulty difficulty) {
+        List<ScoreRecord> topScores = new ArrayList<>();
+        String querySql = "SELECT name, difficulty, attempts, played_at FROM leaderboard WHERE difficulty = ? ORDER BY attempts ASC, played_at ASC LIMIT 10";
         try (Connection conn = connect();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, difficulty.name());
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                entries.add(new Entry(
-                    rs.getString("name"),
-                    Difficulty.valueOf(rs.getString("difficulty")),
-                    rs.getInt("attempts"),
-                    rs.getString("played_at")
+             PreparedStatement preparedStatement = conn.prepareStatement(querySql)) {
+            preparedStatement.setString(1, difficulty.name());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                topScores.add(new ScoreRecord(
+                    resultSet.getString("name"),
+                    Difficulty.valueOf(resultSet.getString("difficulty")),
+                    resultSet.getInt("attempts"),
+                    resultSet.getString("played_at")
                 ));
             }
         } catch (SQLException e) {
             System.err.println("Leaderboard query error: " + e.getMessage());
         }
-        return entries;
+        return topScores;
     }
 
     private Connection connect() throws SQLException {

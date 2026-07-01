@@ -1,121 +1,130 @@
 package com.Wordie.view;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+
+import javax.swing.JPanel;
+
 import com.Wordie.model.TileState;
-import javax.swing.*;
-import java.awt.*;
 
 public class TilePanel extends JPanel {
 
     private final int rows;
-    private final int cols;
+    private final int columns;
     private final char[][] letters;
-    private final TileState[][] states;
+    private final TileState[][] tileStates;
 
-    public TilePanel(int rows, int cols) {
+    public TilePanel(int rows, int columns) {
         this.rows = rows;
-        this.cols = cols;
-        this.letters = new char[rows][cols];
-        this.states = new TileState[rows][cols];
+        this.columns = columns;
+        this.letters = new char[rows][columns];
+        this.tileStates = new TileState[rows][columns];
 
         setBackground(Colors.BG);
 
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                states[r][c] = TileState.EMPTY;
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
+                tileStates[row][column] = TileState.EMPTY;
             }
         }
     }
 
-    public void setLetter(int row, int col, char letter) {
-        letters[row][col] = letter;
+    public void setLetter(int row, int column, char letter) {
+        letters[row][column] = letter;
         repaint();
     }
 
-    public void clearLetter(int row, int col) {
-        letters[row][col] = '\0';
+    public void clearLetter(int row, int column) {
+        letters[row][column] = '\0';
         repaint();
     }
 
-    public void setTileState(int row, int col, TileState state) {
-        states[row][col] = state;
+    public void setTileState(int row, int column, TileState tileState) {
+        tileStates[row][column] = tileState;
         repaint();
     }
 
     public void resetAll() {
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                letters[r][c] = '\0';
-                states[r][c] = TileState.EMPTY;
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
+                letters[row][column] = '\0';
+                tileStates[row][column] = TileState.EMPTY;
             }
         }
         repaint();
     }
 
     public String getWordAtRow(int row) {
-        StringBuilder sb = new StringBuilder();
-        for (int c = 0; c < cols; c++) {
-            sb.append(letters[row][c]);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int column = 0; column < columns; column++) {
+            stringBuilder.append(letters[row][column]);
         }
-        return sb.toString();
+        return stringBuilder.toString();
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
+        Graphics2D graphics2D = (Graphics2D) graphics.create();
+        graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int w = getWidth();
-        int h = getHeight();
+        int width = getWidth();
+        int height = getHeight();
 
-        int gap = Math.max(w / 120, 3);
+        int gap = Math.max(width / 120, 3);
         int tileSize = Math.min(
-            (w - gap * (cols + 1)) / cols,
-            (h - gap * (rows + 1)) / rows
+            (width - gap * (columns + 1)) / columns,
+            (height - gap * (rows + 1)) / rows
         );
         tileSize = Math.max(tileSize, 20);
         tileSize = Math.min(tileSize, 80);
 
-        int gridW = cols * tileSize + (cols - 1) * gap;
-        int gridH = rows * tileSize + (rows - 1) * gap;
-        int startX = (w - gridW) / 2;
-        int startY = (h - gridH) / 2;
+        int gridWidth = columns * tileSize + (columns - 1) * gap;
+        int gridHeight = rows * tileSize + (rows - 1) * gap;
+        int startX = (width - gridWidth) / 2;
+        int startY = (height - gridHeight) / 2;
 
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                int x = startX + c * (tileSize + gap);
-                int y = startY + r * (tileSize + gap);
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
+                int x = startX + column * (tileSize + gap);
+                int y = startY + row * (tileSize + gap);
 
-                TileState state = states[r][c];
-                Color bg = switch (state) {
+                TileState tileState = tileStates[row][column];
+                Color background = switch (tileState) {
                     case CORRECT -> Colors.GREEN;
                     case PRESENT -> Colors.YELLOW;
                     case ABSENT -> Colors.GRAY;
                     case EMPTY -> Colors.DARK;
                 };
-                Color border = state == TileState.EMPTY ? Colors.TILE_BORDER : bg;
+                Color border = tileState == TileState.EMPTY ? Colors.TILE_BORDER : background;
 
-                g2.setColor(bg);
-                g2.fillRoundRect(x, y, tileSize, tileSize, 4, 4);
-                g2.setColor(border);
-                g2.setStroke(new BasicStroke(2));
-                g2.drawRoundRect(x, y, tileSize, tileSize, 4, 4);
+                graphics2D.setColor(background);
+                graphics2D.fillRoundRect(x, y, tileSize, tileSize, 4, 4);
+                graphics2D.setColor(border);
+                graphics2D.setStroke(new BasicStroke(2));
+                graphics2D.drawRoundRect(x, y, tileSize, tileSize, 4, 4);
 
-                char letter = letters[r][c];
+                char letter = letters[row][column];
                 if (letter != '\0') {
-                    g2.setColor(Colors.WHITE);
+                    graphics2D.setColor(Colors.WHITE);
                     int fontSize = (int) (tileSize * 0.5);
-                    g2.setFont(new Font("Arial", Font.BOLD, fontSize));
-                    FontMetrics fm = g2.getFontMetrics();
+                    graphics2D.setFont(new Font("Arial", Font.BOLD, fontSize));
+                    FontMetrics fontMetrics = graphics2D.getFontMetrics();
                     String text = String.valueOf(letter);
-                    int tx = x + (tileSize - fm.stringWidth(text)) / 2;
-                    int ty = y + (tileSize + fm.getAscent() - fm.getDescent()) / 2;
-                    g2.drawString(text, tx, ty);
+                    int tileX = x + (tileSize - fontMetrics.stringWidth(text)) / 2;
+                    int tileY = y + (tileSize + fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
+                    graphics2D.drawString(text, tileX, tileY);
                 }
             }
         }
 
-        g2.dispose();
+        graphics2D.dispose();
     }
 
     @Override

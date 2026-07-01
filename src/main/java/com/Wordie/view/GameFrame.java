@@ -24,12 +24,12 @@ public class GameFrame extends JFrame {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e) {
-                int choice = JOptionPane.showConfirmDialog(
+            public void windowClosing(WindowEvent event) {
+                int userChoice = JOptionPane.showConfirmDialog(
                     GameFrame.this, "Are you sure you want to exit?", "Wordie",
                     JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE
                 );
-                if (choice == JOptionPane.YES_OPTION) {
+                if (userChoice == JOptionPane.YES_OPTION) {
                     System.exit(0);
                 }
             }
@@ -55,8 +55,8 @@ public class GameFrame extends JFrame {
         setLocationRelativeTo(null);
     }
 
-    public void setOnNewGame(Runnable r) { this.onNewGame = r; }
-    public void setOnLeaderboard(Runnable r) { this.onLeaderboard = r; }
+    public void setOnNewGame(Runnable newGameAction) { this.onNewGame = newGameAction; }
+    public void setOnLeaderboard(Runnable leaderboardAction) { this.onLeaderboard = leaderboardAction; }
 
     public TilePanel getTilePanel() { return tilePanel; }
     public KeyboardPanel getKeyboardPanel() { return keyboardPanel; }
@@ -75,13 +75,13 @@ public class GameFrame extends JFrame {
     public Difficulty getCurrentDifficulty() { return currentDifficulty; }
 
     public Difficulty showDifficultyPicker() {
-        String[] options = {"Easy (5 min)", "Medium (3 min)", "Hard (1 min)"};
-        int choice = JOptionPane.showOptionDialog(
+        String[] difficultyOptions = {"Easy (5 min)", "Medium (3 min)", "Hard (1 min)"};
+        int dialogChoice = JOptionPane.showOptionDialog(
             this, "Choose difficulty:", "New Game",
             JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
-            null, options, options[1]
+            null, difficultyOptions, difficultyOptions[1]
         );
-        return switch (choice) {
+        return switch (dialogChoice) {
             case 0 -> Difficulty.EASY;
             case 1 -> Difficulty.MEDIUM;
             case 2 -> Difficulty.HARD;
@@ -94,7 +94,7 @@ public class GameFrame extends JFrame {
 
         JMenu menu = new JMenu("Menu");
         JMenuItem newGameItem = new JMenuItem("New Game");
-        newGameItem.addActionListener(e -> {
+        newGameItem.addActionListener(event -> {
             if (onNewGame != null) onNewGame.run();
         });
         menu.add(newGameItem);
@@ -102,7 +102,7 @@ public class GameFrame extends JFrame {
         menu.addSeparator();
 
         JMenuItem leaderboardItem = new JMenuItem("Leaderboard");
-        leaderboardItem.addActionListener(e -> {
+        leaderboardItem.addActionListener(event -> {
             if (onLeaderboard != null) onLeaderboard.run();
         });
         menu.add(leaderboardItem);
@@ -111,10 +111,10 @@ public class GameFrame extends JFrame {
         return menuBar;
     }
 
-    private String formatLabel(Difficulty d, int seconds) {
+    private String formatLabel(Difficulty difficulty, int seconds) {
         int m = seconds / 60;
         int s = seconds % 60;
-        return String.format("%s · %02d:%02d", d.name(), m, s);
+        return String.format("%s · %02d:%02d", difficulty.name(), m, s);
     }
 
     @Override

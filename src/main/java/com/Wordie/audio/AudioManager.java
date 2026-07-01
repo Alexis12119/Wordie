@@ -19,9 +19,9 @@ public class AudioManager {
         stopBackground();
         bgThread = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
-                try (InputStream is = getClass().getResourceAsStream("/audio/backgroundMusic.mp3")) {
-                    if (is == null) break;
-                    Player player = new Player(new BufferedInputStream(is));
+                try (InputStream audioStream = getClass().getResourceAsStream("/audio/backgroundMusic.mp3")) {
+                    if (audioStream == null) break;
+                    Player player = new Player(new BufferedInputStream(audioStream));
                     bgPlayer = player;
                     try {
                         player.play();
@@ -31,8 +31,8 @@ public class AudioManager {
                             player.close();
                         }
                     }
-                } catch (JavaLayerException | IOException e) {
-                    System.err.println("Background audio error: " + e.getMessage());
+                } catch (JavaLayerException | IOException event) {
+                    System.err.println("Background audio error: " + event.getMessage());
                     break;
                 }
             }
@@ -52,9 +52,9 @@ public class AudioManager {
     private void playOnce(String path) {
         stopEffect();
         fxThread = new Thread(() -> {
-            try (InputStream is = getClass().getResourceAsStream(path)) {
-                if (is == null) return;
-                Player player = new Player(new BufferedInputStream(is));
+            try (InputStream audioStream = getClass().getResourceAsStream(path)) {
+                if (audioStream == null) return;
+                Player player = new Player(new BufferedInputStream(audioStream));
                 fxPlayer = player;
                 try {
                     player.play();
@@ -64,8 +64,8 @@ public class AudioManager {
                         player.close();
                     }
                 }
-            } catch (JavaLayerException | IOException e) {
-                System.err.println("Audio error: " + e.getMessage());
+            } catch (JavaLayerException | IOException event) {
+                System.err.println("Audio error: " + event.getMessage());
             }
         }, "fx-audio");
         fxThread.setDaemon(true);

@@ -36,26 +36,26 @@ public class LeaderboardDialog extends JDialog {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Colors.BG);
 
-        java.util.List<Leaderboard.Entry> entries = leaderboard.getTop(difficulty);
+        java.util.List<Leaderboard.ScoreRecord> topScores = leaderboard.getTop(difficulty);
 
-        if (entries.isEmpty()) {
+        if (topScores.isEmpty()) {
             JLabel empty = new JLabel("No records yet.", SwingConstants.CENTER);
             empty.setForeground(Colors.WHITE);
             panel.add(empty, BorderLayout.CENTER);
             return panel;
         }
 
-        String[] columns = {"#", "Name", "Attempts", "Date"};
-        Object[][] data = new Object[entries.size()][4];
-        for (int i = 0; i < entries.size(); i++) {
-            Leaderboard.Entry e = entries.get(i);
-            data[i][0] = i + 1;
-            data[i][1] = e.name();
-            data[i][2] = e.attempts();
-            data[i][3] = e.playedAt();
+        String[] columnNames = {"#", "Name", "Attempts", "Date"};
+        Object[][] tableRows = new Object[topScores.size()][4];
+        for (int i = 0; i < topScores.size(); i++) {
+            Leaderboard.ScoreRecord scoreRecord = topScores.get(i);
+            tableRows[i][0] = i + 1;
+            tableRows[i][1] = scoreRecord.name();
+            tableRows[i][2] = scoreRecord.attempts();
+            tableRows[i][3] = scoreRecord.playedAt();
         }
 
-        JTable table = new JTable(data, columns);
+        JTable table = new JTable(tableRows, columnNames);
         table.setBackground(Colors.DARK);
         table.setForeground(Colors.WHITE);
         table.setGridColor(Colors.TILE_BORDER);
