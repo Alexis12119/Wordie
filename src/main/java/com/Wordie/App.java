@@ -27,7 +27,8 @@ public class App {
             KeyboardPanel keyboardPanel = new KeyboardPanel();
             GameFrame frame = new GameFrame(tilePanel, keyboardPanel);
 
-            new GameController(model, frame, dict, picker);
+            GameController controller = new GameController(model, frame, dict, picker);
+            controller.start();
             frame.setVisible(true);
         });
     }

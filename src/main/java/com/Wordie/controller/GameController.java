@@ -1,11 +1,22 @@
 package com.Wordie.controller;
 
-import com.Wordie.audio.AudioManager;
-import com.Wordie.model.*;
-import com.Wordie.view.*;
-import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+
+import javax.swing.JOptionPane;
+
+import com.Wordie.audio.AudioManager;
+import com.Wordie.model.Difficulty;
+import com.Wordie.model.GameListener;
+import com.Wordie.model.GameModel;
+import com.Wordie.model.Leaderboard;
+import com.Wordie.model.TileState;
+import com.Wordie.model.WordDictionary;
+import com.Wordie.model.WordPicker;
+import com.Wordie.view.GameFrame;
+import com.Wordie.view.KeyboardPanel;
+import com.Wordie.view.LeaderboardDialog;
+import com.Wordie.view.TilePanel;
 
 public class GameController implements GameListener {
     private final GameModel model;
@@ -31,7 +42,6 @@ public class GameController implements GameListener {
         this.audioManager = new AudioManager();
         this.leaderboard = new Leaderboard();
 
-        model.addListener(this);
         wireKeyboard();
         physicalKeyboardAdapter = createPhysicalKeyboardAdapter();
         frame.addKeyListener(physicalKeyboardAdapter);
@@ -39,6 +49,10 @@ public class GameController implements GameListener {
 
         secondsRemaining = model.getTimeLimit();
         frame.updateTimer(secondsRemaining);
+    }
+    
+    public void start() {
+        model.addListener(this);
         startTimer();
         audioManager.playBackground();
     }

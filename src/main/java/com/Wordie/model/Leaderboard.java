@@ -10,8 +10,8 @@ public class Leaderboard {
     public record ScoreRecord(String name, Difficulty difficulty, int attempts, String playedAt) {}
 
     public Leaderboard() {
-        try (Connection conn = connect();
-             Statement createTableStatement = conn.createStatement()) {
+        try (Connection connection = connect();
+             Statement createTableStatement = connection.createStatement()) {
             createTableStatement.execute("""
                 CREATE TABLE IF NOT EXISTS leaderboard (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,8 +34,8 @@ public class Leaderboard {
 
     public void save(String name, Difficulty difficulty, int attempts) {
         String insertSql = "INSERT INTO leaderboard (name, difficulty, attempts) VALUES (?, ?, ?)";
-        try (Connection conn = connect();
-             PreparedStatement preparedStatement = conn.prepareStatement(insertSql)) {
+        try (Connection connection = connect();
+             PreparedStatement preparedStatement = connection.prepareStatement(insertSql)) {
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, difficulty.name());
             preparedStatement.setInt(3, attempts);
@@ -48,8 +48,8 @@ public class Leaderboard {
     public List<ScoreRecord> getTop(Difficulty difficulty) {
         List<ScoreRecord> topScores = new ArrayList<>();
         String querySql = "SELECT name, difficulty, attempts, played_at FROM leaderboard WHERE difficulty = ? ORDER BY attempts ASC, played_at ASC LIMIT 10";
-        try (Connection conn = connect();
-             PreparedStatement preparedStatement = conn.prepareStatement(querySql)) {
+        try (Connection connection = connect();
+             PreparedStatement preparedStatement = connection.prepareStatement(querySql)) {
             preparedStatement.setString(1, difficulty.name());
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
