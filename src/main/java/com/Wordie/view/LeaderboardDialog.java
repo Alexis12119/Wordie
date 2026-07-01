@@ -9,6 +9,7 @@ public class LeaderboardDialog extends JDialog {
 
     public LeaderboardDialog(JFrame owner, Leaderboard leaderboard) {
         super(owner, "Leaderboard", true);
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
         JTabbedPane tabs = new JTabbedPane();

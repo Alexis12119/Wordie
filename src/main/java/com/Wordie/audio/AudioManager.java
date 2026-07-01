@@ -4,29 +4,34 @@ import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class AudioManager {
 
     private Thread bgThread;
-    private volatile Player bgPlayer;
+    private Player bgPlayer;
 
     private Thread fxThread;
-    private volatile Player fxPlayer;
+    private Player fxPlayer;
 
     public synchronized void playBackground() {
         stopBackground();
         bgThread = new Thread(() -> {
-            while (!Thread.interrupted()) {
-                InputStream is = getClass().getResourceAsStream("/audio/backgroundMusic.mp3");
-                if (is == null) break;
-                try {
+            while (!Thread.currentThread().isInterrupted()) {
+                try (InputStream is = getClass().getResourceAsStream("/audio/backgroundMusic.mp3")) {
+                    if (is == null) break;
                     Player player = new Player(new BufferedInputStream(is));
                     bgPlayer = player;
-                    player.play();
-                    bgPlayer = null;
-                    is.close();
-                } catch (JavaLayerException | java.io.IOException e) {
+                    try {
+                        player.play();
+                    } finally {
+                        if (bgPlayer == player) {
+                            bgPlayer = null;
+                            player.close();
+                        }
+                    }
+                } catch (JavaLayerException | IOException e) {
                     System.err.println("Background audio error: " + e.getMessage());
                     break;
                 }
@@ -47,15 +52,19 @@ public class AudioManager {
     private void playOnce(String path) {
         stopEffect();
         fxThread = new Thread(() -> {
-            InputStream is = getClass().getResourceAsStream(path);
-            if (is == null) return;
-            try {
+            try (InputStream is = getClass().getResourceAsStream(path)) {
+                if (is == null) return;
                 Player player = new Player(new BufferedInputStream(is));
                 fxPlayer = player;
-                player.play();
-                fxPlayer = null;
-                is.close();
-            } catch (JavaLayerException | java.io.IOException e) {
+                try {
+                    player.play();
+                } finally {
+                    if (fxPlayer == player) {
+                        fxPlayer = null;
+                        player.close();
+                    }
+                }
+            } catch (JavaLayerException | IOException e) {
                 System.err.println("Audio error: " + e.getMessage());
             }
         }, "fx-audio");

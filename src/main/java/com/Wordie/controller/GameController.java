@@ -16,8 +16,10 @@ public class GameController implements GameListener {
     private final WordPicker wordPicker;
     private final AudioManager audioManager;
     private final Leaderboard leaderboard;
+    private final KeyAdapter physicalKeyboardAdapter;
     private javax.swing.Timer gameTimer;
     private int secondsRemaining;
+    private LeaderboardDialog leaderboardDialog;
 
     public GameController(GameModel model, GameFrame frame, WordDictionary dictionary, WordPicker wordPicker) {
         this.model = model;
@@ -31,7 +33,8 @@ public class GameController implements GameListener {
 
         model.addListener(this);
         wireKeyboard();
-        wirePhysicalKeyboard();
+        physicalKeyboardAdapter = createPhysicalKeyboardAdapter();
+        frame.addKeyListener(physicalKeyboardAdapter);
         wireMenu();
 
         secondsRemaining = model.getTimeLimit();
@@ -46,8 +49,8 @@ public class GameController implements GameListener {
         keyboardPanel.setInputHandler(this::handleCharInput);
     }
 
-    private void wirePhysicalKeyboard() {
-        frame.addKeyListener(new KeyAdapter() {
+    private KeyAdapter createPhysicalKeyboardAdapter() {
+        return new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (model.isGameOver()) return;
@@ -60,9 +63,7 @@ public class GameController implements GameListener {
                     handleSubmit();
                 }
             }
-        });
-        frame.setFocusable(true);
-        frame.setFocusTraversalKeysEnabled(false);
+        };
     }
 
     private void wireMenu() {
@@ -76,10 +77,14 @@ public class GameController implements GameListener {
                 startNewGame(d);
             }
         });
-        frame.setOnLeaderboard(() -> {
-            LeaderboardDialog dialog = new LeaderboardDialog(frame, leaderboard);
-            dialog.setVisible(true);
-        });
+        frame.setOnLeaderboard(this::showLeaderboard);
+    }
+
+    private void showLeaderboard() {
+        if (leaderboardDialog == null) {
+            leaderboardDialog = new LeaderboardDialog(frame, leaderboard);
+        }
+        leaderboardDialog.setVisible(true);
     }
 
     private void startNewGame(Difficulty difficulty) {
@@ -111,6 +116,18 @@ public class GameController implements GameListener {
         if (gameTimer != null) {
             gameTimer.stop();
             gameTimer = null;
+        }
+    }
+
+    /** Releases all resources held by this controller. */
+    public void cleanup() {
+        stopTimer();
+        audioManager.stopAll();
+        model.removeListener(this);
+        frame.removeKeyListener(physicalKeyboardAdapter);
+        if (leaderboardDialog != null) {
+            leaderboardDialog.dispose();
+            leaderboardDialog = null;
         }
     }
 
@@ -213,6 +230,7 @@ public class GameController implements GameListener {
             Difficulty d = frame.showDifficultyPicker();
             startNewGame(d);
         } else {
+            cleanup();
             System.exit(0);
         }
     }

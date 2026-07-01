@@ -1,9 +1,18 @@
 package com.Wordie;
 
+import javax.swing.SwingUtilities;
+
 import com.Wordie.controller.GameController;
-import com.Wordie.model.*;
-import com.Wordie.view.*;
-import javax.swing.*;
+import com.Wordie.model.Difficulty;
+import com.Wordie.model.GameModel;
+import com.Wordie.model.GuessEvaluator;
+import com.Wordie.model.RandomWordPicker;
+import com.Wordie.model.WordBank;
+import com.Wordie.model.WordDictionary;
+import com.Wordie.model.WordPicker;
+import com.Wordie.view.GameFrame;
+import com.Wordie.view.KeyboardPanel;
+import com.Wordie.view.TilePanel;
 
 public class App {
 
